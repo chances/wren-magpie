@@ -86,6 +86,19 @@ class Magpie {
       return result
     }
   }
+  static sequence(a, b) {
+    return Magpie.sequence([a, b])
+  }
+  static sequence(parsers) {
+    return Fn.new { |input|
+      var results = parsers.map { |parser|
+        var lexeme = parser.call(input)
+        input = input[lexeme.count..-1]
+        return lexeme
+      }
+      return results.reduce { |str,lexeme| str + lexeme }
+    }
+  }
   static zeroOrMore(parser) {
     return Fn.new { |input|
       var result = ""
