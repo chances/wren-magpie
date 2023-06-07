@@ -2,8 +2,8 @@ class Magpie {
   // Primitive Helpers
   static charRangeFrom(string) {
     if (string == null || string.count == 0) Fiber.abort("Expected a non-null and non-empty string.")
-    var a = string[0].codePoints.reduce { |min, n| n < min ? n : min }
-    var b = string[0].codePoints.reduce { |max, n| n > max ? n : max }
+    var a = string.codePoints.reduce { |min, n| n < min ? n : min }
+    var b = string.codePoints.reduce { |max, n| n > max ? n : max }
     return a..b
   }
   static charRangeFrom(start, end) {
