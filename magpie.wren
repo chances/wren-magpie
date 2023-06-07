@@ -48,6 +48,9 @@ class Magpie {
 
   static char(codePoint) {
     return Fn.new { |input|
+      if (codePoint is String && codePoint.count > 1) Fiber.abort("Expected only a single character.")
+      // Convert a string to its first UTF code point
+      if (codePoint is String) codePoint = codePoint[0].codePoints[0]
       var observedChar = input[0].codePoints[0]
       if (observedChar == codePoint) return input[0]
       Fiber.abort(

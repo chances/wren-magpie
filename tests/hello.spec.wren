@@ -32,6 +32,10 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
+  Assert.equal(Magpie.parse(Magpie.char("0"), "0"), "0")
+})
+
+Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.str("hello"), "hello world")
   Assert.equal(result, "hello")
 })
