@@ -11,6 +11,11 @@ Assert.equal(Magpie.charRangeFrom("az"), 97..122)
 Assert.equal(Magpie.charRangeFrom("a", "z"), 97..122)
 
 Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.digit(), "0")
+  Assert.equal(result, "0")
+})
+
+Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.str("hello"), "hello world")
   Assert.equal(result, "hello")
 })
