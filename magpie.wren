@@ -94,12 +94,14 @@ class Magpie {
   }
 
   // Special Combinators
+  // FIXME: This could be infinitely recursive?
   static discardWhitespace() {
     return Fn.new { |input|
       // See https://en.wikipedia.org/wiki/Whitespace_character#Unicode
-      var discarded = Magpie.zeroOrMore(
+      var eatWhitespace = Magpie.zeroOrMore(
         Magpie.or(Magpie.charFrom(9..13), Magpie.char(32))
       )
+      eatWhitespace.call(input)
       return ""
     }
   }
