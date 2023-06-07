@@ -10,6 +10,10 @@ Assert.equal(Magpie.charRangeFrom("A", "Z"), 65..90)
 Assert.equal(Magpie.charRangeFrom("az"), 97..122)
 Assert.equal(Magpie.charRangeFrom("a", "z"), 97..122)
 
+Assert.doesNotAbort(Fn.new {
+  Magpie.parse(Magpie.charFrom(Magpie.charRangeFrom("a", "z")), "a")
+})
+
 Assert.aborts(Fn.new {
   Magpie.parse(Magpie.eof, "a")
 })
@@ -37,7 +41,12 @@ Assert.doesNotAbort(Fn.new {
   Assert.equal(result, "world")
 })
 
-// Assert.doesNotAbort(Fn.new {
-//   var result = Magpie.parse(Magpie.discardWhitespace(), " \t\r\n")
-//   Assert.equal(result, "")
-// })
+Assert.aborts(Fn.new {
+var result = Magpie.parse(Magpie.or(Magpie.digit, Magpie.charRangeFrom("a", "z")), "aA")
+Assert.equal(result, "a")
+})
+
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.whitespace(), " \t\r\n")
+  Assert.equal(result, " \t\r\n")
+})

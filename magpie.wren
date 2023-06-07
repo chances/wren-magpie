@@ -15,23 +15,25 @@ class Magpie {
   }
 
   // Primitive Parsers
+  static digit { Magpie.digit(0..9) }
   static digit() { Magpie.digit(0..9) }
   static digit(range) {
     if (range.min < 0 || range.max > 9) Fiber.abort("Expected a range between zero and nine, inclusive.")
     return Fn.new { |input|
       var num = Num.fromString(input[0])
-      if ((range.isInclusive ? num >= range.min : num > range.min) && num <= range.max) return input
+      if (num != null && (range.isInclusive ? num >= range.min : num > range.min) && num <= range.max) return input
       Fiber.abort("Expected a number between %(range.min) and %(range.max)")
     }
   }
   static charFrom(range) {
     if (range.min < 0) Fiber.abort("Expected a range between zero and +∞, inclusive.")
     return Fn.new { |input|
+      var observedChar = input[0].codePoints[0]
       for (char in range) {
-        if (input[0].codePoints[0] == String.fromCodePoint(char)) return input[0]
+        if (observedChar == char) return input[0]
       }
       Fiber.abort(
-        "Expected a char in the range %(String.fromCodePoint(range.min)) to %(String.fromCodePoint(range.max))"
+        "Expected a char in the range '%(String.fromCodePoint(range.min))' to '%(String.fromCodePoint(range.max))', but saw '%(input[0])' (%(observedChar))"
       )
     }
   }
@@ -39,23 +41,24 @@ class Magpie {
   static eof() {
     return Fn.new { |input|
       if (input.count > 0) Fiber.abort(
-        "Expected end of input, but got %(input)"
+        "Expected end of input, but saw %(input)"
       )
     }
   }
 
   static char(codePoint) {
     return Fn.new { |input|
-      if (input[0].codePoints[0] == codePoint) return input[0]
+      var observedChar = input[0].codePoints[0]
+      if (observedChar == codePoint) return input[0]
       Fiber.abort(
-        "Expected a '%(codePoint)' char, but got '%(input[0].codePoints[0])'"
+        "Expected '%(String.fromCodePoint(codePoint))' (%(codePoint)), but saw '%(String.fromCodePoint(observedChar))' (%(observedChar))"
       )
     }
   }
   static str(value) {
     return Fn.new { |input|
       if (input.startsWith(value)) return value
-      Fiber.abort("Expected \"%(value)\", but got\"%(input)\"")
+      Fiber.abort("Expected \"%(value)\", but saw \"%(input)\"")
     }
   }
 
@@ -79,38 +82,33 @@ class Magpie {
         result = parserB.call(input)
       }
       error = fiber.try()
-      if (error != null) Fiber.abort("Expected a choice, but got \"%(input)\": %(error)")
+      if (error != null) Fiber.abort("Expected a choice, but saw \"%(input)\": %(error)")
       return result
     }
   }
   static zeroOrMore(parser) {
     return Fn.new { |input|
       var result = ""
-      var fiber = Fiber.new {
-        result = result + parser.call(input)
+      var error = null
+      while (error == null && input.count > 0) {
+        error = (Fiber.new {
+          var lexeme = parser.call(input)
+          result = result + lexeme
+          input = input[lexeme.count..-1]
+        }).try()
       }
-      var error = fiber.try()
-      if (error != null) return result
-      while (error == null) {
-        fiber = Fiber.new {
-          result = result + parser.call(input)
-        }
-        error = fiber.try()
-      }
+      if (error != null) Fiber.abort(error)
       return result
     }
   }
 
   // Special Combinators
-  // FIXME: This could be infinitely recursive?
-  static discardWhitespace() {
+  static whitespace() {
     return Fn.new { |input|
       // See https://en.wikipedia.org/wiki/Whitespace_character#Unicode
-      var eatWhitespace = Magpie.zeroOrMore(
+      return Magpie.zeroOrMore(
         Magpie.or(Magpie.charFrom(9..13), Magpie.char(32))
-      )
-      eatWhitespace.call(input)
-      return ""
+      ).call(input)
     }
   }
 
