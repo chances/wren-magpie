@@ -42,8 +42,13 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.aborts(Fn.new {
-var result = Magpie.parse(Magpie.or(Magpie.digit, Magpie.charRangeFrom("a", "z")), "aA")
-Assert.equal(result, "a")
+  Assert.equal(Magpie.parse(Magpie.or(Magpie.digit, Magpie.charRangeFrom("a", "z")), "aA"), "a")
+  Assert.equal(Magpie.parse(Magpie.or(Magpie.digit, Magpie.charRangeFrom("a", "z")), "abdzA"), "abdz")
+})
+
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.zeroOrMore(Magpie.charFrom(Magpie.charRangeFrom("a", "z"))), "aaaB")
+  Assert.equal(result, "aaa")
 })
 
 Assert.doesNotAbort(Fn.new {

@@ -97,7 +97,6 @@ class Magpie {
           input = input[lexeme.count..-1]
         }).try()
       }
-      if (error != null) Fiber.abort(error)
       return result
     }
   }
