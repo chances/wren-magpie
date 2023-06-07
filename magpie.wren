@@ -9,8 +9,8 @@ class Magpie {
   static charRangeFrom(start, end) {
     if (start == null || start.count == 0) Fiber.abort("Expected a non-null and non-empty start string.")
     if (end == null || end.count == 0) Fiber.abort("Expected a non-null and non-empty end string.")
-    var a = string[0].codePoints[0]
-    var b = string[0].codePoints[0]
+    var a = start[0].codePoints[0]
+    var b = end[0].codePoints[0]
     return a..b
   }
 
