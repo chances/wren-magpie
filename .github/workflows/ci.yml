@@ -20,8 +20,11 @@ jobs:
     #       ${{ runner.os }}-dub-
     - name: Install Wren console
       run: |
-        brew tap exercism/wren
-        brew install wren-console
+        wget "https://github.com/joshgoebel/wren-console/releases/download/v0.3.1/wren-console-v0.3.1-linux.tar.gz" -O /tmp/wren-console.tar.gz
+        mkdir -p /tmp/wren-console
+        tar xf /tmp/wren-console.tar.gz --directory=/tmp/wren-console
+        ls /tmp/wren-console
+        echo "/tmp/wren-console/bin" >> $GITHUB_PATH
     - name: Test
       id: tests
       if: always() # Run tests even if lint step fails
