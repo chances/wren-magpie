@@ -14,12 +14,12 @@ Assert.doesNotAbort(Fn.new {
   Magpie.parse(Magpie.charFrom(Magpie.charRangeFrom("a", "z")), "a")
 })
 
-Assert.aborts(Fn.new {
-  Magpie.parse(Magpie.eof, "a")
-})
-
 Assert.doesNotAbort(Fn.new {
   Magpie.parse(Magpie.eof, "")
+})
+
+Assert.aborts(Fn.new {
+  Magpie.parse(Magpie.eof, "a")
 })
 
 Assert.aborts(Fn.new {

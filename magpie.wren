@@ -37,14 +37,6 @@ class Magpie {
       )
     }
   }
-  static eof { Magpie.eof() }
-  static eof() {
-    return Fn.new { |input|
-      if (input.count > 0) Fiber.abort(
-        "Expected end of input, but saw %(input)"
-      )
-    }
-  }
 
   static char(codePoint) {
     return Fn.new { |input|
@@ -124,6 +116,14 @@ class Magpie {
       return Magpie.zeroOrMore(
         Magpie.or(Magpie.charFrom(9..13), Magpie.char(32))
       ).call(input)
+    }
+  }
+  static eof { Magpie.eof() }
+  static eof() {
+    return Fn.new { |input|
+      if (input.count > 0) Fiber.abort(
+        "Expected end of input, but saw %(input)"
+      )
     }
   }
 
