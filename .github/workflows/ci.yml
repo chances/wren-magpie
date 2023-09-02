@@ -10,21 +10,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    # - name: Cache Wren Artifacts
-    #   if: runner.os == 'Linux' || runner.os == 'macOS'
-    #   uses: actions/cache@v2
-    #   with:
-    #     path: ~/.dub
-    #     key: ${{ runner.os }}-dub-${{ hashFiles('**/dub.json') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-dub-
     - name: Install Wren console
       run: |
         wget "https://github.com/joshgoebel/wren-console/releases/download/v0.3.1/wren-console-v0.3.1-linux.tar.gz" -O /tmp/wren-console.tar.gz
         mkdir -p /tmp/wren-console
         tar xf /tmp/wren-console.tar.gz --directory=/tmp/wren-console
-        ls /tmp/wren-console
         echo "/tmp/wren-console/bin" >> $GITHUB_PATH
+        echo "Installed Wren console to system path"
     - name: Test
       id: tests
       if: always() # Run tests even if lint step fails
