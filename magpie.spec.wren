@@ -1,5 +1,7 @@
-import "../vendor/assert/Assert" for Assert
-import "../magpie" for Magpie
+import "./vendor/assert/Assert" for Assert
+import "./magpie" for Magpie
+
+Assert.exists(Magpie)
 
 Assert.equal(Magpie.charRangeFrom("0"), 48..48)
 Assert.equal(Magpie.charRangeFrom("0", "0"), 48..48)

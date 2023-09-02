@@ -1,0 +1,32 @@
+name: Magpie CI
+
+on: push
+
+jobs:
+  test:
+    name: Tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    # - name: Cache Wren Artifacts
+    #   if: runner.os == 'Linux' || runner.os == 'macOS'
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: ~/.dub
+    #     key: ${{ runner.os }}-dub-${{ hashFiles('**/dub.json') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-dub-
+    - name: Install Wren console
+      run: |
+        brew tap exercism/wren
+        brew install wren-console
+    - name: Test
+      id: tests
+      if: always() # Run tests even if lint step fails
+      run: wrenc magpie.spec.wren
+    # - name: Upload Coverage to Codecov
+    #   # Upload test coverage even if lint step fails
+    #   if: success() || (steps.lint.outcome == 'failure' && steps.tests.outcome == 'success')
+    #   run: bash <(curl -s https://codecov.io/bash)
