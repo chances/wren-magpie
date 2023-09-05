@@ -53,6 +53,11 @@ Assert.aborts(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.or([Magpie.char("a"), Magpie.str("b"), Magpie.str("c")]), "c")
+  Assert.equal(result, "c")
+})
+
+Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.zeroOrMore(Magpie.charFrom(Magpie.charRangeFrom("a", "z"))), "aaaB")
   Assert.equal(result, "aaa")
 })

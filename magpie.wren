@@ -64,21 +64,22 @@ class Magpie {
     }
   }
   static or(parserA, parserB) {
+    return Magpie.or([parserA, parserB])
+  }
+  static or(parsers) {
+    if (!(parsers is Sequence)) Fiber.abort("Expected a sequence of parsers")
     return Fn.new { |input|
-      // Try parser A
       var result = null
-      var fiber = Fiber.new {
-        result = parserA.call(input)
+      var error = null
+      // Try each parser, returning the first successful result
+      for (parser in parsers) {
+        var fiber = Fiber.new {
+          result = parser.call(input)
+        }
+        error = fiber.try()
+        if (error == null) return result
       }
-      var error = fiber.try()
-      if (error == null) return result
-      // Try parser B
-      fiber = Fiber.new {
-        result = parserB.call(input)
-      }
-      error = fiber.try()
       if (error != null) Fiber.abort("Expected a choice, but saw \"%(input)\": %(error)")
-      return result
     }
   }
   static sequence(a, b) {
