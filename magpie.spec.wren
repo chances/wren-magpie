@@ -71,6 +71,6 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.whitespace(), " \t\r\n")
+  var result = Magpie.parse(Magpie.whitespace, " \t\r\n")
   Assert.equal(result, " \t\r\n")
 })

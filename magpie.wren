@@ -111,6 +111,7 @@ class Magpie {
   }
 
   // Special Combinators
+  static whitespace { Magpie.whitespace() }
   static whitespace() {
     return Fn.new { |input|
       // See https://en.wikipedia.org/wiki/Whitespace_character#Unicode
