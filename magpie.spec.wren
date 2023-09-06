@@ -172,3 +172,11 @@ Assert.doesNotAbort(Fn.new {
   Assert.equal(result.count, 3)
   Assert.equal(Result.lexemes(result), "\t\r\n")
 })
+
+Assert.doesNotAbort(Fn.new {
+  var result = Result.new(0, "0")
+  result.tag("number")
+  Assert.equal(result.tag, "number")
+  result.tag = "zero"
+  Assert.equal(result.tag, "zero")
+})

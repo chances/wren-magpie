@@ -247,6 +247,11 @@ class Result {
   map(fn) {
     return Result.new(fn.call(this.token), this.lexeme)
   }
+
+  tag(value) {
+    _tag = value
+    return this
+  }
 }
 
 // See `Magpie.optional`
