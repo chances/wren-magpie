@@ -31,13 +31,6 @@ class ParserFn {
     }
   }
 
-  // Discard the results of this parser.
-  discard { discard() }
-  // ditto
-  discard() {
-    return this.map {|result| EmptyResult.new() }
-  }
-
   // Map the results of this parser to the result given by `fn`.
   // Params:
   // fn: Fn

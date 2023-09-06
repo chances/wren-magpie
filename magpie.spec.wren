@@ -86,13 +86,6 @@ Assert.doesNotAbort(Fn.new {
   Assert.equal(Magpie.parse(parser.join, "hello world").token, "hello world")
 })
 
-Assert.aborts(Fn.new {
-  Magpie.parse(
-    Magpie.sequence(Magpie.str("hello").discard, Magpie.str(" world")),
-    "hello world"
-  )
-})
-
 Assert.doesNotAbort(Fn.new {
   var parser = Magpie.sequence(Magpie.str("hello"), Magpie.optional(Magpie.str(" world")))
   var result = Magpie.parse(parser, "hello")
