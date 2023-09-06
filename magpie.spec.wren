@@ -1,5 +1,5 @@
 import "./vendor/assert/Assert" for Assert
-import "./magpie" for Magpie
+import "./magpie" for Magpie, Result
 
 Assert.exists(Magpie)
 
@@ -46,27 +46,33 @@ Assert.aborts(Fn.new {
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.digit(), "0")
-  Assert.equal(result, "0")
+  Assert.equal(result.token, 0)
 })
 
 Assert.doesNotAbort(Fn.new {
-  Assert.equal(Magpie.parse(Magpie.char("0"), "0"), "0")
+  Assert.equal(Magpie.parse(Magpie.char("0"), "0").token, "0")
 })
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.str("hello"), "hello world")
-  Assert.equal(result, "hello")
+  Assert.equal(result.token, "hello")
 })
 
 Assert.doesNotAbort(Fn.new {
   var parser = Magpie.sequence(Magpie.str("hello"), Magpie.optional(Magpie.str(" world")))
-  Assert.equal(Magpie.parse(parser, "hello"), "hello")
-  Assert.equal(Magpie.parse(parser, "hello world"), "hello world")
+  var result = Magpie.parse(parser, "hello world")
+  Assert.equal(Result.lexemes(result), "hello world")
+})
+
+Assert.doesNotAbort(Fn.new {
+  var parser = Magpie.sequence(Magpie.str("hello"), Magpie.optional(Magpie.str(" world")))
+  var result = Magpie.parse(parser, "hello")
+  Assert.equal(Result.lexemes(result), "hello")
 })
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.or(Magpie.str("hello"), Magpie.str("world")), "world")
-  Assert.equal(result, "world")
+  Assert.equal(result.lexeme, "world")
 })
 
 Assert.aborts(Fn.new {
@@ -76,35 +82,36 @@ Assert.aborts(Fn.new {
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.or([Magpie.char("a"), Magpie.str("b"), Magpie.str("c")]), "c")
-  Assert.equal(result, "c")
+  Assert.equal(result.lexeme, "c")
 })
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.zeroOrMore(Magpie.charFrom(Magpie.charRangeFrom("a", "z"))), "aaaB")
-  Assert.equal(result, "aaa")
+  Assert.equal(Result.lexemes(result), "aaa")
 })
 
 Assert.doesNotAbort(Fn.new {
-  Assert.equal(
-    Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "aB"),
-    "aB"
-  )
-  Assert.equal(
-    Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "qT"),
-    "qT"
-  )
-  Assert.equal(
-    Magpie.parse(
-      Magpie.zeroOrMore(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper)),
-      "aBaB"
-    ),
-    "aBaB"
-  )
+  var result = Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "aB")
+  Assert.equal(result.count, 2)
+  Assert.equal(Result.lexemes(result), "aB")
+})
+
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "qT")
+  Assert.equal(result.count, 2)
+  Assert.equal(Result.lexemes(result), "qT")
+})
+
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.zeroOrMore(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper)), "aBaB")
+  Assert.equal(result.count, 4)
+  Assert.equal(Result.lexemes(result), "aBaB")
 })
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.oneOrMore(Magpie.alphaLower), "aaaB")
-  Assert.equal(result, "aaa")
+  Assert.equal(result.count, 3)
+  Assert.equal(Result.lexemes(result), "aaa")
 })
 
 Assert.aborts(Fn.new {
@@ -115,7 +122,32 @@ Assert.aborts(Fn.new {
   Magpie.parse(Magpie.oneOrMore(Magpie.alphaUpper), "lower")
 })
 
+// Tab Character
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.whitespace, " \t\r\n")
-  Assert.equal(result, " \t\r\n")
+  var result = Magpie.parse(Magpie.whitespace, "\t")
+  Assert.equal(Result.lexemes(result), "\t")
+})
+
+// Tab Character (32)
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.whitespace, "  ")
+  Assert.equal(Result.lexemes(result)[0].codePoints[0], 32)
+})
+
+// Spaces
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.whitespace, " ")
+  Assert.equal(Result.lexemes(result), " ")
+})
+
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.whitespace, "\r\n")
+  Assert.equal(result.count, 2)
+  Assert.equal(Result.lexemes(result), "\r\n")
+})
+
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.whitespace, "\t\r\n")
+  Assert.equal(result.count, 3)
+  Assert.equal(Result.lexemes(result), "\t\r\n")
 })

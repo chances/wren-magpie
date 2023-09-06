@@ -13,6 +13,10 @@ class Magpie {
     var b = end[0].codePoints[0]
     return a..b
   }
+  static advanceInput(input, result) {
+    if (result is List) return input[Result.lexemes(result).count..-1]
+    return input[result.lexeme.count..-1]
+  }
 
   // Primitive Parsers
   static fail { Magpie.fail("") }
@@ -37,7 +41,9 @@ class Magpie {
     if (range.min < 0 || range.max > 9) Fiber.abort("Expected a range between zero and nine, inclusive.")
     return Fn.new { |input|
       var num = Num.fromString(input[0])
-      if (num != null && (range.isInclusive ? num >= range.min : num > range.min) && num <= range.max) return input
+      if (num != null && (range.isInclusive ? num >= range.min : num > range.min) && num <= range.max) {
+        return Result.new(num, input[0])
+      }
       Fiber.abort("Expected a number between %(range.min) and %(range.max)")
     }
   }
@@ -47,7 +53,7 @@ class Magpie {
     return Fn.new { |input|
       var observedChar = input[0].codePoints[0]
       for (char in range) {
-        if (observedChar == char) return input[0]
+        if (observedChar == char) return Result.new(input[0])
       }
       Fiber.abort(
         "Expected a char in the range '%(String.fromCodePoint(range.min))' to '%(String.fromCodePoint(range.max))', but saw '%(input[0])' (%(observedChar))"
@@ -60,7 +66,7 @@ class Magpie {
       // Convert a string to its first UTF code point
       if (codePoint is String) codePoint = codePoint[0].codePoints[0]
       var observedChar = input[0].codePoints[0]
-      if (observedChar == codePoint) return input[0]
+      if (observedChar == codePoint) return Result.new(input[0])
       Fiber.abort(
         "Expected '%(String.fromCodePoint(codePoint))' (%(codePoint)), but saw '%(String.fromCodePoint(observedChar))' (%(observedChar))"
       )
@@ -68,7 +74,7 @@ class Magpie {
   }
   static str(value) {
     return Fn.new { |input|
-      if (input.startsWith(value)) return value
+      if (input.startsWith(value)) return Result.new(value)
       Fiber.abort("Expected \"%(value)\", but saw \"%(input)\"")
     }
   }
@@ -76,12 +82,12 @@ class Magpie {
   // Combinators
   static one(parser) {
     return Fn.new { |input|
-      parser.call(input)
+      return parser.call(input)
     }
   }
   static optional(parser) {
     return Fn.new { |input|
-      var result = ""
+      var result = EmptyResult.new()
       var error = (Fiber.new {
         result = parser.call(input)
       }).try()
@@ -98,10 +104,9 @@ class Magpie {
       var error = null
       // Try each parser, returning the first successful result
       for (parser in parsers) {
-        var fiber = Fiber.new {
+        var error = Fiber.new {
           result = parser.call(input)
-        }
-        error = fiber.try()
+        }.try()
         if (error == null) return result
       }
       if (error != null) Fiber.abort("Expected a choice, but saw \"%(input)\": %(error)")
@@ -112,46 +117,48 @@ class Magpie {
   }
   static sequence(parsers) {
     return Fn.new { |input|
-      var results = parsers.map { |parser|
-        var lexeme = parser.call(input)
-        input = input[lexeme.count..-1]
-        return lexeme
+      // Try each parser in sequence
+      var results = []
+      for (parser in parsers) {
+        var result = parser.call(input)
+        if (result is EmptyResult) continue
+        results.add(result)
+        input = Magpie.advanceInput(input, result)
       }
-      return results.reduce { |str,lexeme| str + lexeme }
+      return Result.flatMap(results)
     }
   }
   static zeroOrMore(parser) {
     return Fn.new { |input|
-      var result = ""
+      var results = []
       var error = null
       while (error == null && input.count > 0) {
         error = (Fiber.new {
-          var lexeme = parser.call(input)
-          result = result + lexeme
-          input = input[lexeme.count..-1]
+          var result = parser.call(input)
+          results.add(result)
+          input = Magpie.advanceInput(input, result)
         }).try()
       }
-      return result
+      return Result.flatMap(results)
     }
   }
   static oneOrMore(parser) {
     return Fn.new { |input|
-      var result = ""
-      var error = null
-      error = (Fiber.new {
-        var lexeme = parser.call(input)
-        result = result + lexeme
-        input = input[lexeme.count..-1]
+      var results = []
+      var error = (Fiber.new {
+        var result = parser.call(input)
+        results.add(result)
+        input = Magpie.advanceInput(input, result)
       }).try()
       if (error != null) Fiber.abort(error)
       while (error == null && input.count > 0) {
         error = (Fiber.new {
-          var lexeme = parser.call(input)
-          result = result + lexeme
-          input = input[lexeme.count..-1]
+          var result = parser.call(input)
+          results.add(result)
+          input = Magpie.advanceInput(input, result)
         }).try()
       }
-      return result
+      return Result.flatMap(results)
     }
   }
 
@@ -177,5 +184,47 @@ class Magpie {
   // Entry point for a parser
   static parse(parser, input) {
     return parser.call(input)
+  }
+}
+
+// A parse result token and its source lexeme.
+class Result {
+  construct new(token) {
+    _lexeme = _token = token
+  }
+  construct new(token, lexeme) {
+    _lexeme = token
+    _token = token
+  }
+
+  static lexemes(results) {
+    return results.reduce("", Fn.new {|str,token|
+      return str + token.lexeme
+    })
+  }
+
+  static flatMap(list) {
+    var results = []
+    for (r in list) {
+      if (r is Result) results.add(r)
+      if (r is List) results.addAll(Result.flatMap(r))
+    }
+    return results
+  }
+
+  lexeme { _lexeme }
+  token { _token }
+  // TODO: Add source location info
+
+  map(fn) {
+    return Result.new(fn.call(this.token), this.lexeme)
+  }
+}
+
+// See `Magpie.optional`
+class EmptyResult is Result {
+  construct new() {
+    _token = null
+    _lexeme = ""
   }
 }
