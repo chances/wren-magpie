@@ -27,6 +27,13 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.alphaLower.tag("letter"), "a")
+  Assert.equal(result.token, "a")
+  Assert.equal(result.lexeme, "a")
+  Assert.equal(result.tag, "letter")
+})
+
+Assert.doesNotAbort(Fn.new {
   Magpie.parse(Magpie.eof, "")
 })
 
@@ -103,7 +110,8 @@ Assert.doesNotAbort(Fn.new {
     ),
     "b"
   )
-  Assert.equal(result.lexeme, "B")
+  Assert.equal(result.token, "B")
+  Assert.equal(result.lexeme, "b")
 })
 
 Assert.doesNotAbort(Fn.new {
@@ -162,8 +170,9 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.whitespace, "\r\n")
-  Assert.equal(result.count, 2)
+  var result = Magpie.parse(Magpie.whitespace.tag("linefeed"), "\r\n")
+  Assert.equal(Result.tags(result).count, 2)
+  Assert.equal(Result.tags(result)[0], "linefeed")
   Assert.equal(Result.lexemes(result), "\r\n")
 })
 

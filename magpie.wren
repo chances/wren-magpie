@@ -17,7 +17,21 @@ class ParserFn {
   map(fn) {
     return ParserFn.new { |input|
       var result = this.call(input)
-      return Result.new(fn.call(result), result.lexeme)
+      var token = fn.call(result)
+      if (token is Result) return token
+      if (result is List) return result.map {|r| r.rewrite(token) }.toList
+      // FIXME: if (result is List) return Result.new(token, Result.lexemes(result))
+      return result.rewrite(token)
+    }
+  }
+
+  // Tag the result of this parser with the given `value`.
+  // Params:
+  // value: String
+  tag(value) {
+    return this.map {|result|
+      if (result is List) return result.map {|r| r.tag(value)}.toList
+      return result.tag(value)
     }
   }
 }
@@ -214,17 +228,25 @@ class Magpie {
 // A parse result token and its source lexeme.
 class Result {
   construct new(token) {
+    if (token is Result) Fiber.abort("Tokens should not be Result values.")
     _lexeme = _token = token
   }
   construct new(token, lexeme) {
+    if (token is Result) Fiber.abort("Tokens should not be Result values.")
     _lexeme = token
     _token = token
   }
 
   static lexemes(results) {
+    if (results is Result) return results.lexeme
     return results.reduce("", Fn.new {|str,token|
       return str + token.lexeme
     })
+  }
+
+  static tags(results) {
+    if (results is Result) return results.tag
+    return results.map {|token| token.tag }.toList
   }
 
   static flatMap(list) {
@@ -245,7 +267,12 @@ class Result {
   // TODO: Add source location info
 
   map(fn) {
-    return Result.new(fn.call(this.token), this.lexeme)
+    return Result.new(fn.call(_token), _lexeme)
+  }
+
+  rewrite(token) {
+    _token = token
+    return this
   }
 
   tag(value) {
