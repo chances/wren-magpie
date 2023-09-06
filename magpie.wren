@@ -156,7 +156,7 @@ class Magpie {
         }.try()
         if (error == null) return result
       }
-      if (error != null) Fiber.abort("Expected a choice, but saw \"%(input)\": %(error)")
+      Fiber.abort("Expected a choice, but saw \"%(input)\": %(error)")
     }
   }
   static sequence(a, b) {

@@ -97,10 +97,22 @@ Assert.doesNotAbort(Fn.new {
   Assert.equal(result.lexeme, "world")
 })
 
-Assert.aborts(Fn.new {
-  Assert.equal(Magpie.parse(Magpie.or(Magpie.digit, Magpie.charRangeFrom("a", "z")), "aA"), "a")
-  Assert.equal(Magpie.parse(Magpie.or(Magpie.digit, Magpie.charRangeFrom("a", "z")), "abdzA"), "abdz")
+Assert.doesNotAbort(Fn.new {
+  var parser = Magpie.or(Magpie.digit, Magpie.alphaLower)
+  Assert.equal(Magpie.parse(parser, "3").token, 3)
 })
+
+Assert.doesNotAbort(Fn.new {
+  var parser = Magpie.or(Magpie.digit, Magpie.alphaLower)
+  Assert.equal(Magpie.parse(parser, "abba").token, "a")
+})
+
+Assert.doesNotAbort(Fn.new {
+  var parser = Magpie.or(Magpie.digit, Magpie.alphaLower)
+  Assert.equal(Magpie.parse(parser, "62").token, 6)
+})
+
+Assert.aborts(Fn.new { Magpie.parse(Magpie.or(Magpie.digit, Magpie.alphaLower), "A") })
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.or([Magpie.char("a"), Magpie.str("b"), Magpie.str("c")]), "c")
