@@ -46,7 +46,12 @@ class ParserFn {
 }
 
 class Magpie {
-  // Primitive Helpers
+  // Entry point for a parser
+  static parse(parser, input) {
+    return parser.call(input)
+  }
+
+  // Section: Primitive Helpers
   static charRangeFrom(string) {
     if (string == null || string.count == 0) Fiber.abort("Expected a non-null and non-empty string.")
     var a = string.codePoints.reduce { |min, n| n < min ? n : min }
@@ -65,11 +70,57 @@ class Magpie {
     return input[result.lexeme.count..-1]
   }
 
-  // Primitive Parsers
+  // Section: Primitive Parsers
   static fail { Magpie.fail("") }
   static fail(message) {
     return ParserFn.new { |input|
       Fiber.abort(message)
+    }
+  }
+
+  // Section: Common Parsers
+  static eof { Magpie.eof() }
+  static eof() {
+    return ParserFn.new { |input|
+      if (input.count > 0) Fiber.abort(
+        "Expected end of input, but saw %(input)"
+      )
+    }
+  }
+
+  // Parse a line ending.
+  // See https://en.wikipedia.org/wiki/Newline#Unicode
+  static linefeed { Magpie.linefeed() }
+  // ditto
+  static linefeed() {
+    return Magpie.or([
+      // CR + LF
+      Magpie.str("\r\n"),
+      //  Carriage Return
+      Magpie.char("\r"),
+      // Line Feed
+      Magpie.char("\n"),
+      // Vertical tab
+      Magpie.char(0xB),
+      // Form feed
+      Magpie.char(0xC),
+      // Next Line
+      Magpie.char(0x0085),
+      // Line Separator
+      Magpie.char(0x2028),
+      // Paragraph Separator
+      Magpie.char(0x2029)
+    ])
+  }
+
+  // See https://en.wikipedia.org/wiki/Whitespace_character#Unicode
+  static whitespace { Magpie.whitespace() }
+  // ditto
+  static whitespace() {
+    return ParserFn.new { |input|
+      return Magpie.zeroOrMore(
+        Magpie.or(Magpie.charFrom(9..13), Magpie.char(32))
+      ).call(input)
     }
   }
 
@@ -82,8 +133,34 @@ class Magpie {
     return Magpie.charFrom(Magpie.charRangeFrom("A", "Z"))
   }
 
+  // Parse an ASCII character.
+  // See: https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)
+  static ascii { Magpie.ascii() }
+  // ditto
+  static ascii() { Magpie.charFrom(0..0x7F) }
+  // ditto
+  // Exclude the given `range` of code points.
+  // Params: range: Num|String|List<Num>|Range Code points to exclude.
+  // Throws: When the given `range` is a `String` and is more than one code point.
+  // Throws: When the given `range` exceeds the set of ASCII code points.
+  static ascii(range) {
+    if (range is Num) range = [range..range]
+    // TODO: Figure out range of a list of code points
+    if (range is List) Fiber.abort("Unimplemented for List!")
+    if (range is String && range.codePoints.count == 1) Fiber.abort("Expected a single code point.")
+    if (range is String) range = [range.codePoints[0]..range.codePoints[0]]
+    if (range.min < 0 || range.max > 0x7F) Fiber.abort("Expected a range between `0` and `%(0x7F)`, inclusive.")
+    // TODO: ASCII with exclusions gymnastics
+    return Magpie.fail("Unimplemented!")
+  }
+
+  // Parse an Arabic numeral digit, i.e. any number between zero and nine.
   static digit { Magpie.digit(0..9) }
+  // ditto
   static digit() { Magpie.digit(0..9) }
+  // Parse an Arabic numeral digit, i.e. any number between zero and nine, in the given `range`.
+  // Params: range: Range
+  // Throws: When the given `range` is less than zero or greater than nine.
   static digit(range) {
     if (range.min < 0 || range.max > 9) Fiber.abort("Expected a range between zero and nine, inclusive.")
     return ParserFn.new { |input|
@@ -95,6 +172,8 @@ class Magpie {
     }
   }
 
+  // Parse a `range` of characters.
+  // Params: range: Range of Unicode code points.
   static charFrom(range) {
     if (range.min < 0) Fiber.abort("Expected a range between zero and +∞, inclusive.")
     return ParserFn.new { |input|
@@ -107,6 +186,7 @@ class Magpie {
       )
     }
   }
+  // Parse a single Unicode code point
   static char(codePoint) {
     return ParserFn.new { |input|
       if (codePoint is String && codePoint.count > 1) Fiber.abort("Expected only a single character.")
@@ -119,6 +199,8 @@ class Magpie {
       )
     }
   }
+  // Parse a literal string.
+  // Params: value: String
   static str(value) {
     return ParserFn.new { |input|
       if (input.startsWith(value)) return Result.new(value)
@@ -126,7 +208,7 @@ class Magpie {
     }
   }
 
-  // Combinators
+  // Section: Combinators
   static one(parser) {
     return ParserFn.new { |input|
       return parser.call(input)
@@ -207,30 +289,6 @@ class Magpie {
       }
       return Result.flatMap(results)
     }
-  }
-
-  // Special Combinators
-  static whitespace { Magpie.whitespace() }
-  static whitespace() {
-    return ParserFn.new { |input|
-      // See https://en.wikipedia.org/wiki/Whitespace_character#Unicode
-      return Magpie.zeroOrMore(
-        Magpie.or(Magpie.charFrom(9..13), Magpie.char(32))
-      ).call(input)
-    }
-  }
-  static eof { Magpie.eof() }
-  static eof() {
-    return ParserFn.new { |input|
-      if (input.count > 0) Fiber.abort(
-        "Expected end of input, but saw %(input)"
-      )
-    }
-  }
-
-  // Entry point for a parser
-  static parse(parser, input) {
-    return parser.call(input)
   }
 }
 
