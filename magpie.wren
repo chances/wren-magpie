@@ -15,6 +15,13 @@ class Magpie {
   }
 
   // Primitive Parsers
+  static fail { Magpie.fail("") }
+  static fail(message) {
+    return Fn.new { |input|
+      Fiber.abort(message)
+    }
+  }
+
   static digit { Magpie.digit(0..9) }
   static digit() { Magpie.digit(0..9) }
   static digit(range) {
@@ -25,6 +32,7 @@ class Magpie {
       Fiber.abort("Expected a number between %(range.min) and %(range.max)")
     }
   }
+
   static charFrom(range) {
     if (range.min < 0) Fiber.abort("Expected a range between zero and +∞, inclusive.")
     return Fn.new { |input|
@@ -37,7 +45,6 @@ class Magpie {
       )
     }
   }
-
   static char(codePoint) {
     return Fn.new { |input|
       if (codePoint is String && codePoint.count > 1) Fiber.abort("Expected only a single character.")
