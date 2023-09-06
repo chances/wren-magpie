@@ -31,6 +31,13 @@ class ParserFn {
     }
   }
 
+  // Discard the results of this parser.
+  discard { discard() }
+  // ditto
+  discard() {
+    return this.map {|result| EmptyResult.new() }
+  }
+
   // Map the results of this parser to the result given by `fn`.
   // Params:
   // fn: Fn
@@ -261,6 +268,7 @@ class Result {
   static flatMap(list) {
     var results = []
     for (r in list) {
+      if (r is EmptyResult) continue
       if (r is Result) results.add(r)
       if (r is List) results.addAll(Result.flatMap(r))
     }
