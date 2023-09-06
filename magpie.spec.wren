@@ -43,6 +43,12 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
+  var parser = Magpie.sequence(Magpie.str("hello"), Magpie.optional(Magpie.str(" world")))
+  Assert.equal(Magpie.parse(parser, "hello"), "hello")
+  Assert.equal(Magpie.parse(parser, "hello world"), "hello world")
+})
+
+Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.or(Magpie.str("hello"), Magpie.str("world")), "world")
   Assert.equal(result, "world")
 })

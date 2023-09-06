@@ -63,6 +63,15 @@ class Magpie {
       parser.call(input)
     }
   }
+  static optional(parser) {
+    return Fn.new { |input|
+      var result = ""
+      var error = (Fiber.new {
+        result = parser.call(input)
+      }).try()
+      return result
+    }
+  }
   static or(parserA, parserB) {
     return Magpie.or([parserA, parserB])
   }
