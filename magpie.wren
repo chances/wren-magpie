@@ -1,3 +1,27 @@
+class ParserFn {
+  // Params:
+  // fn: Fn
+  construct new(fn) {
+    _fn = fn
+  }
+
+  // Params:
+  // input: String
+  call(input) {
+    return _fn.call(input)
+  }
+
+  // Map the results of this parser to the result given by `fn`.
+  // Params:
+  // fn: Fn
+  map(fn) {
+    return ParserFn.new { |input|
+      var result = this.call(input)
+      return Result.new(fn.call(result), result.lexeme)
+    }
+  }
+}
+
 class Magpie {
   // Primitive Helpers
   static charRangeFrom(string) {
@@ -21,7 +45,7 @@ class Magpie {
   // Primitive Parsers
   static fail { Magpie.fail("") }
   static fail(message) {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       Fiber.abort(message)
     }
   }
@@ -39,7 +63,7 @@ class Magpie {
   static digit() { Magpie.digit(0..9) }
   static digit(range) {
     if (range.min < 0 || range.max > 9) Fiber.abort("Expected a range between zero and nine, inclusive.")
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       var num = Num.fromString(input[0])
       if (num != null && (range.isInclusive ? num >= range.min : num > range.min) && num <= range.max) {
         return Result.new(num, input[0])
@@ -50,7 +74,7 @@ class Magpie {
 
   static charFrom(range) {
     if (range.min < 0) Fiber.abort("Expected a range between zero and +∞, inclusive.")
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       var observedChar = input[0].codePoints[0]
       for (char in range) {
         if (observedChar == char) return Result.new(input[0])
@@ -61,7 +85,7 @@ class Magpie {
     }
   }
   static char(codePoint) {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       if (codePoint is String && codePoint.count > 1) Fiber.abort("Expected only a single character.")
       // Convert a string to its first UTF code point
       if (codePoint is String) codePoint = codePoint[0].codePoints[0]
@@ -73,7 +97,7 @@ class Magpie {
     }
   }
   static str(value) {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       if (input.startsWith(value)) return Result.new(value)
       Fiber.abort("Expected \"%(value)\", but saw \"%(input)\"")
     }
@@ -81,12 +105,12 @@ class Magpie {
 
   // Combinators
   static one(parser) {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       return parser.call(input)
     }
   }
   static optional(parser) {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       var result = EmptyResult.new()
       var error = (Fiber.new {
         result = parser.call(input)
@@ -99,7 +123,7 @@ class Magpie {
   }
   static or(parsers) {
     if (!(parsers is Sequence)) Fiber.abort("Expected a sequence of parsers")
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       var result = null
       var error = null
       // Try each parser, returning the first successful result
@@ -116,7 +140,7 @@ class Magpie {
     return Magpie.sequence([a, b])
   }
   static sequence(parsers) {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       // Try each parser in sequence
       var results = []
       for (parser in parsers) {
@@ -129,7 +153,7 @@ class Magpie {
     }
   }
   static zeroOrMore(parser) {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       var results = []
       var error = null
       while (error == null && input.count > 0) {
@@ -143,7 +167,7 @@ class Magpie {
     }
   }
   static oneOrMore(parser) {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       var results = []
       var error = (Fiber.new {
         var result = parser.call(input)
@@ -165,7 +189,7 @@ class Magpie {
   // Special Combinators
   static whitespace { Magpie.whitespace() }
   static whitespace() {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       // See https://en.wikipedia.org/wiki/Whitespace_character#Unicode
       return Magpie.zeroOrMore(
         Magpie.or(Magpie.charFrom(9..13), Magpie.char(32))
@@ -174,7 +198,7 @@ class Magpie {
   }
   static eof { Magpie.eof() }
   static eof() {
-    return Fn.new { |input|
+    return ParserFn.new { |input|
       if (input.count > 0) Fiber.abort(
         "Expected end of input, but saw %(input)"
       )

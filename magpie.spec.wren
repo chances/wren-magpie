@@ -17,6 +17,16 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(
+    Magpie.charFrom(Magpie.charRangeFrom("a", "z")).map {|result|
+      return result.token[0].codePoints[0]
+    },
+    "a"
+  )
+  Assert.equal(result.token, 97)
+})
+
+Assert.doesNotAbort(Fn.new {
   Magpie.parse(Magpie.eof, "")
 })
 
@@ -83,6 +93,17 @@ Assert.aborts(Fn.new {
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.or([Magpie.char("a"), Magpie.str("b"), Magpie.str("c")]), "c")
   Assert.equal(result.lexeme, "c")
+})
+
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(
+    Magpie.or(
+      Magpie.char("a").map {|result| "A" },
+      Magpie.str("b").map {|result| "B" }
+    ),
+    "b"
+  )
+  Assert.equal(result.lexeme, "B")
 })
 
 Assert.doesNotAbort(Fn.new {
