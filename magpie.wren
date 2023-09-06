@@ -22,6 +22,15 @@ class Magpie {
     }
   }
 
+  static alphaLower { Magpie.alphaLower() }
+  static alphaLower() {
+    return Magpie.charFrom(Magpie.charRangeFrom("a", "z"))
+  }
+  static alphaUpper { Magpie.alphaUpper() }
+  static alphaUpper() {
+    return Magpie.charFrom(Magpie.charRangeFrom("A", "Z"))
+  }
+
   static digit { Magpie.digit(0..9) }
   static digit() { Magpie.digit(0..9) }
   static digit(range) {

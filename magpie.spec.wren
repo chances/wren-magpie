@@ -24,6 +24,22 @@ Assert.aborts(Fn.new {
   Magpie.parse(Magpie.eof, "a")
 })
 
+Assert.doesNotAbort(Fn.new {
+  Magpie.parse(Magpie.alphaLower, "c")
+})
+
+Assert.aborts(Fn.new {
+  Magpie.parse(Magpie.alphaLower, "C")
+})
+
+Assert.doesNotAbort(Fn.new {
+  Magpie.parse(Magpie.alphaUpper, "A")
+})
+
+Assert.aborts(Fn.new {
+  Magpie.parse(Magpie.alphaUpper, "b")
+})
+
 Assert.aborts(Fn.new {
   Magpie.parse(Magpie.digit, "a")
 })
@@ -69,11 +85,21 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
-  var lower = Magpie.charFrom(Magpie.charRangeFrom("a", "z"))
-  var upper = Magpie.charFrom(Magpie.charRangeFrom("A", "Z"))
-  Assert.equal(Magpie.parse(Magpie.sequence(lower, upper), "aB"), "aB")
-  Assert.equal(Magpie.parse(Magpie.sequence(lower, upper), "qT"), "qT")
-  Assert.equal(Magpie.parse(Magpie.zeroOrMore(Magpie.sequence(lower, upper)), "aBaB"), "aBaB")
+  Assert.equal(
+    Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "aB"),
+    "aB"
+  )
+  Assert.equal(
+    Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "qT"),
+    "qT"
+  )
+  Assert.equal(
+    Magpie.parse(
+      Magpie.zeroOrMore(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper)),
+      "aBaB"
+    ),
+    "aBaB"
+  )
 })
 
 Assert.doesNotAbort(Fn.new {
