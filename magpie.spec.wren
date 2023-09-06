@@ -103,6 +103,19 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
+  var result = Magpie.parse(Magpie.oneOrMore(Magpie.alphaLower), "aaaB")
+  Assert.equal(result, "aaa")
+})
+
+Assert.aborts(Fn.new {
+  Magpie.parse(Magpie.oneOrMore(Magpie.alphaLower), "CAPS")
+})
+
+Assert.aborts(Fn.new {
+  Magpie.parse(Magpie.oneOrMore(Magpie.alphaUpper), "lower")
+})
+
+Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.whitespace, " \t\r\n")
   Assert.equal(result, " \t\r\n")
 })

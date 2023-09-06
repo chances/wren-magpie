@@ -134,6 +134,26 @@ class Magpie {
       return result
     }
   }
+  static oneOrMore(parser) {
+    return Fn.new { |input|
+      var result = ""
+      var error = null
+      error = (Fiber.new {
+        var lexeme = parser.call(input)
+        result = result + lexeme
+        input = input[lexeme.count..-1]
+      }).try()
+      if (error != null) Fiber.abort(error)
+      while (error == null && input.count > 0) {
+        error = (Fiber.new {
+          var lexeme = parser.call(input)
+          result = result + lexeme
+          input = input[lexeme.count..-1]
+        }).try()
+      }
+      return result
+    }
+  }
 
   // Special Combinators
   static whitespace { Magpie.whitespace() }
