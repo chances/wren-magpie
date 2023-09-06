@@ -260,6 +260,11 @@ class Result {
     })
   }
 
+  static tokens(results) {
+    if (results is Result) return results.token
+    return results.map {|r| r.token }.toList
+  }
+
   static tags(results) {
     if (results is Result) return results.tag
     return results.map {|token| token.tag }.toList

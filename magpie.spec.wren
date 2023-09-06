@@ -147,24 +147,28 @@ Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "aB")
   Assert.equal(result.count, 2)
   Assert.equal(Result.lexemes(result), "aB")
+  Assert.deepEqual(Result.tokens(result), "aB".toList)
 })
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "qT")
   Assert.equal(result.count, 2)
   Assert.equal(Result.lexemes(result), "qT")
+  Assert.deepEqual(Result.tokens(result), "qT".toList)
 })
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.zeroOrMore(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper)), "aBaB")
   Assert.equal(result.count, 4)
   Assert.equal(Result.lexemes(result), "aBaB")
+  Assert.deepEqual(Result.tokens(result), "aBaB".toList)
 })
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.oneOrMore(Magpie.alphaLower), "aaaB")
   Assert.equal(result.count, 3)
   Assert.equal(Result.lexemes(result), "aaa")
+  Assert.deepEqual(Result.tokens(result), "aaa".toList)
 })
 
 Assert.aborts(Fn.new {
