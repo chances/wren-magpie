@@ -238,6 +238,10 @@ class Result {
 
   lexeme { _lexeme }
   token { _token }
+  // Type: String
+  tag { _tag }
+  // ditto
+  tag=(value) { _tag = value }
   // TODO: Add source location info
 
   map(fn) {
