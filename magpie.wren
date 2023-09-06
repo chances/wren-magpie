@@ -11,6 +11,26 @@ class ParserFn {
     return _fn.call(input)
   }
 
+  // Tag the result of this parser with the given `value`.
+  // Params:
+  // value: String
+  tag(value) {
+    return this.map {|result|
+      if (result is List) return result.map {|r| r.tag(value)}.toList
+      return result.tag(value)
+    }
+  }
+
+  // Join all of the tokens that result from this parser together.
+  join { join() }
+  // ditto
+  join() {
+    return this.map {|result|
+      if (result is List) return result[0].rewrite(result.map {|r| r.token }.join())
+      return result.rewrite(result.token)
+    }
+  }
+
   // Map the results of this parser to the result given by `fn`.
   // Params:
   // fn: Fn
@@ -20,18 +40,7 @@ class ParserFn {
       var token = fn.call(result)
       if (token is Result) return token
       if (result is List) return result.map {|r| r.rewrite(token) }.toList
-      // FIXME: if (result is List) return Result.new(token, Result.lexemes(result))
       return result.rewrite(token)
-    }
-  }
-
-  // Tag the result of this parser with the given `value`.
-  // Params:
-  // value: String
-  tag(value) {
-    return this.map {|result|
-      if (result is List) return result.map {|r| r.tag(value)}.toList
-      return result.tag(value)
     }
   }
 }
