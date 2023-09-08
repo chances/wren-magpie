@@ -213,16 +213,19 @@ class Magpie {
       )
     }
   }
-  // Parse a single Unicode code point
+  // Parse a single Unicode code point.
+  // Params: codePoint: Num|String
   static char(codePoint) {
     return ParserFn.new { |input|
       if (codePoint is String && codePoint.count > 1) Fiber.abort("Expected only a single character.")
       // Convert a string to its first UTF code point
       if (codePoint is String) codePoint = codePoint[0].codePoints[0]
+
+      if (input.count == 0) Fiber.abort("Expected '%(String.fromCodePoint(codePoint))' (%(codePoint)), but saw EOF.")
       var observedChar = input[0].codePoints[0]
       if (observedChar == codePoint) return Result.new(input[0])
       Fiber.abort(
-        "Expected '%(String.fromCodePoint(codePoint))' (%(codePoint)), but saw '%(String.fromCodePoint(observedChar))' (%(observedChar))"
+        "Expected '%(String.fromCodePoint(codePoint))' (%(codePoint)), but saw '%(String.fromCodePoint(observedChar))' (%(observedChar))."
       )
     }
   }
@@ -269,7 +272,9 @@ class Magpie {
         }.try()
         if (error == null) return result
       }
-      Fiber.abort("Expected a choice, but saw \"%(input)\": %(error)")
+      error = error == null ? "." : ": %(error)"
+      if (input != null && input.count > 0) Fiber.abort("Expected a choice, but saw \"%(input[0])\"%(error)")
+      Fiber.abort("Expected a choice, but saw EOF.")
     }
   }
   static sequence(a, b) {
@@ -358,7 +363,7 @@ class ParserFn {
   // value: String
   tag(value) {
     return this.map {|result|
-      if (result is List) return result.map {|r| r.tag(value)}.toList
+      if (result is List) return result.map {|result| result.tag(value)}.toList
       return result.tag(value)
     }
   }
@@ -379,7 +384,7 @@ class ParserFn {
 
   // Map the results of this parser to the result given by `fn`.
   // Params:
-  // fn: Fn
+  // fn: Fn(result)
   map(fn) {
     return ParserFn.new { |input|
       var result = this.call(input)
@@ -415,13 +420,13 @@ class Result {
   // Params: results: Result|List<Result>
   static tokens(results) {
     if (results is Result) return results.token
-    return results.map {|r| r.token }.toList
+    return Result.flatMap(results.map {|r| r.token }.toList)
   }
 
   // Params: results: Result|List<Result>
   static tags(results) {
     if (results is Result) return results.tag
-    return results.map {|token| token.tag }.toList
+    return Result.flatMap(results.map {|token| token.tag }.toList)
   }
 
   // Params: list: List
