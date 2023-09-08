@@ -1,4 +1,4 @@
-import "./../magpie" for Magpie, Result
+import "./../magpie" for Char, Magpie, Result
 
 var comment = Magpie.sequence([
   Magpie.optional(Magpie.linefeed),
@@ -7,7 +7,7 @@ var comment = Magpie.sequence([
   Magpie.optional(Magpie.linefeed),
 ])
 
-static var Parser = Magpie.zeroOrMore(Magpie.sequence([
+var parser = Magpie.zeroOrMore(Magpie.sequence([
   Magpie.zeroOrMore(comment),
   // Section
   Magpie.one(Magpie.sequence([
@@ -17,7 +17,20 @@ static var Parser = Magpie.zeroOrMore(Magpie.sequence([
   ])),
   Magpie.zeroOrMore(comment),
   // Properties
-  // TODO: Implement parameter parser
+  Magpie.sequence([
+    Magpie.whitespace(Char.lineEndings),
+    Magpie.ascii(Char.asciiLineEndings).tag("name"),
+    Magpie.whitespace(Char.lineEndings),
+    Magpie.char("="),
+    Magpie.whitespace(Char.lineEndings),
+    Magpie.ascii(Char.asciiLineEndings).tag("value"),
+    Magpie.zeroOrMore(comment)
+  ]).tag("property").map {|r|
+    return Property.new(
+      r.where {|token| token.tag == "name" }[0],
+      r.where {|token| token.tag == "value" }[0]
+    )
+  }
 ]))
 
 // See https://en.wikipedia.org/wiki/INI_file#Format
