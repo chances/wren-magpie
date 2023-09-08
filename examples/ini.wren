@@ -14,7 +14,9 @@ var parser = Magpie.zeroOrMore(Magpie.sequence([
     Magpie.str("["),
     Magpie.ascii("]"),
     Magpie.str("]")
-  ])),
+  ])).map {|r|
+    return Section.new(r.where {|token| token.tag == "name" }[0])
+  },
   Magpie.zeroOrMore(comment),
   // Properties
   Magpie.sequence([
@@ -41,6 +43,12 @@ class Ini {
 }
 
 class Section {
+  // Params:
+  // name: String
+  construct new(name) {
+    _name = name
+    _properties = []
+  }
   // Params:
   // name: String
   // properties: List<Property>
