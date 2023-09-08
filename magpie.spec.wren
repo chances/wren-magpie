@@ -2,6 +2,22 @@ import "wren-assert/assert" for Assert
 import "./magpie" for Magpie, Result
 
 Assert.exists(Magpie)
+Assert.exists(Result)
+
+// Results
+
+var result = Result.new("token")
+Assert.equal(result.token, "token")
+Assert.equal(result.lexeme, "token")
+Assert.equal(result.tag, null)
+Assert.equal(result.nested, false)
+
+Assert.aborts { Assert.deepEqual(Result.flatMap(result), result) }
+Assert.deepEqual(Result.flatMap([result]), [result])
+Assert.deepEqual(Result.flatMap([result, [result]]), [result, result])
+Assert.deepEqual(Result.flatMap([result, [result, result]]), [result, result, result])
+
+// Parsers
 
 Assert.equal(Magpie.charRangeFrom("0"), 48..48)
 Assert.equal(Magpie.charRangeFrom("0", "0"), 48..48)

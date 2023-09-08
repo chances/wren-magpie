@@ -374,6 +374,7 @@ class Result {
     _token = token
   }
 
+  // Params: results: Result|List<Result>
   static lexemes(results) {
     if (results is Result) return results.lexeme
     return results.reduce("", Fn.new {|str,token|
@@ -381,11 +382,13 @@ class Result {
     })
   }
 
+  // Params: results: Result|List<Result>
   static tokens(results) {
     if (results is Result) return results.token
     return results.map {|r| r.token }.toList
   }
 
+  // Params: results: Result|List<Result>
   static tags(results) {
     if (results is Result) return results.tag
     return results.map {|token| token.tag }.toList
@@ -408,6 +411,9 @@ class Result {
   // ditto
   tag=(value) { _tag = value }
   // TODO: Add source location info
+
+  // Whether this result's `token` is a nested list of `Result`'s.
+  nested { token is List && token[0] is Result }
 
   map(fn) {
     return Result.new(fn.call(_token), _lexeme)
