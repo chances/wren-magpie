@@ -1,18 +1,25 @@
-import "./../magpie" for Char, Magpie, Result
+import "./../magpie" for Char, Magpie, ParserFn, Result
 
 var comment = Magpie.sequence([
   Magpie.optional(Magpie.linefeed),
   Magpie.str(";"),
-  Magpie.charFrom(Magpie.ascii),
-  Magpie.optional(Magpie.linefeed),
+  // Read any ASCII character until an ASCII line ending
+  Magpie.ascii(Char.asciiLineEndings).tag("comment"),
+  Magpie.linefeed,
 ])
+
+var sectionName = ParserFn.new {|input|
+  var closingSquareBracket = "]".codePoints[0]
+  var chars = (0..Char.asciiMax).toList.where {|x| x != closingSquareBracket }
+  return Magpie.oneOrMore(Magpie.or(chars.map {|char| Magpie.char(char) }))
+}
 
 var parser = Magpie.zeroOrMore(Magpie.sequence([
   Magpie.zeroOrMore(comment),
   // Section
   Magpie.one(Magpie.sequence([
     Magpie.str("["),
-    Magpie.ascii("]"),
+    sectionName.tag("name"),
     Magpie.str("]")
   ])).map {|r|
     return Section.new(r.where {|token| token.tag == "name" }[0])
