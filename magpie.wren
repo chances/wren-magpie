@@ -117,11 +117,7 @@ class Magpie {
   static whitespace { Magpie.whitespace() }
   // ditto
   static whitespace() {
-    return ParserFn.new { |input|
-      return Magpie.zeroOrMore(
-        Magpie.or(Magpie.charFrom(9..13), Magpie.char(32))
-      ).call(input)
-    }
+    return Magpie.or(Magpie.charFrom(9..13), Magpie.char(32))
   }
   // ditto
   // Exclude the given `range` of code points.
@@ -132,7 +128,7 @@ class Magpie {
     if (range is List && range.any {|x| !(x is Num) }) Fiber.abort("Expected a list of Num.")
 
     var chars = Char.whitespace.where {|x| x < range.min && x > range.max }
-    return Magpie.zeroOrMore(Magpie.or(chars.map {|char| Magpie.char(char) }))
+    return Magpie.or(chars.map {|char| Magpie.char(char) })
   }
 
   static alphaLower { Magpie.alphaLower() }
@@ -165,8 +161,8 @@ class Magpie {
     }
     if (range is Range) range = range.toList
 
-    var chars = (0..Char.asciiMax).toList.where {|x| !range.contains(x) }
-    return Magpie.zeroOrMore(Magpie.or(chars.map {|char| Magpie.char(char) }))
+    var chars = (0..Char.asciiMax).toList.where {|x| !range.contains(x) }.toList
+    return Magpie.or(chars.map {|char| Magpie.char(char) }.toList)
   }
 
   // Parse an Arabic numeral digit, i.e. any number between zero and nine.

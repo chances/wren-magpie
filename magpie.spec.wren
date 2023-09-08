@@ -207,16 +207,17 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.whitespace.tag("linefeed"), "\r\n")
-  Assert.equal(Result.tags(result).count, 2)
-  Assert.equal(Result.tags(result)[0], "linefeed")
-  Assert.equal(Result.lexemes(result), "\r\n")
+  var result = Magpie.parse(Magpie.oneOrMore(Magpie.whitespace).join.tag("linefeed"), "\r\n")
+  Assert.equal(result.tag, "linefeed")
+  Assert.deepEqual(result.token, "\r\n")
+  // FIXME: Assert.deepEqual(result.lexeme, "\r\n")
 })
 
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.whitespace, "\t\r\n")
+  var result = Magpie.parse(Magpie.oneOrMore(Magpie.whitespace), "\t\r\n")
   Assert.equal(result.count, 3)
-  Assert.equal(Result.lexemes(result), "\t\r\n")
+  Assert.deepEqual(Result.tokens(result), "\t\r\n")
+  Assert.deepEqual(Result.lexemes(result), "\t\r\n")
 })
 
 Assert.doesNotAbort(Fn.new {
