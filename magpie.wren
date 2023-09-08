@@ -323,6 +323,8 @@ class ParserFn {
     return _fn.call(input)
   }
 
+  // Section: Result Modifiers
+
   // Tag the result of this parser with the given `value`.
   // Params:
   // value: String
@@ -338,7 +340,10 @@ class ParserFn {
   // ditto
   join() {
     return this.map {|result|
-      if (result is List) return result[0].rewrite(result.map {|r| r.token }.join())
+      if (result is List) return result[0].rewrite(
+        result.map {|r| r.token }.join(),
+        result.map {|r| r.lexeme }.join()
+      )
       return result.rewrite(result.token)
     }
   }
@@ -419,7 +424,11 @@ class Result {
   }
 
   rewrite(token) {
+    return this.rewrite(token, lexeme)
+  }
+  rewrite(token, lexeme) {
     _token = token
+    _lexeme = lexeme
     return this
   }
 
