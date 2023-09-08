@@ -1,51 +1,83 @@
 import "./../magpie" for Char, Magpie, ParserFn, Result
 
-var comment = Magpie.sequence([
-  Magpie.optional(Magpie.linefeed),
-  Magpie.str(";"),
-  // Read any ASCII character until an ASCII line ending
-  Magpie.ascii(Char.asciiLineEndings).tag("comment"),
-  Magpie.linefeed,
-])
-
-var sectionName = ParserFn.new {|input|
-  var closingSquareBracket = "]".codePoints[0]
-  var chars = (0..Char.asciiMax).toList.where {|x| x != closingSquareBracket }
-  return Magpie.oneOrMore(Magpie.or(chars.map {|char| Magpie.char(char) }))
-}
-
-var parser = Magpie.zeroOrMore(Magpie.sequence([
-  Magpie.zeroOrMore(comment),
-  // Section
-  Magpie.one(Magpie.sequence([
-    Magpie.str("["),
-    sectionName.tag("name"),
-    Magpie.str("]")
-  ])).map {|r|
-    return Section.new(r.where {|token| token.tag == "name" }[0])
-  },
-  Magpie.zeroOrMore(comment),
-  // Properties
-  Magpie.sequence([
-    Magpie.whitespace(Char.lineEndings),
-    Magpie.ascii(Char.asciiLineEndings).tag("name"),
-    Magpie.whitespace(Char.lineEndings),
-    Magpie.char("="),
-    Magpie.whitespace(Char.lineEndings),
-    Magpie.ascii(Char.asciiLineEndings).tag("value"),
-    Magpie.zeroOrMore(comment)
-  ]).tag("property").map {|r|
-    return Property.new(
-      r.where {|token| token.tag == "name" }[0],
-      r.where {|token| token.tag == "value" }[0]
-    )
-  }
-]))
-
 // See https://en.wikipedia.org/wiki/INI_file#Format
 class Ini {
-  static parse(input) {
+  construct new() {
+    _sections = []
+  }
+  construct new(sections) {
+    _sections = sections
+  }
 
+  sections { _sections }
+
+  static parse(input) {
+    return Ini.new(Magpie.parse(Ini.parser, input).token)
+  }
+
+  static whitespace { Magpie.zeroOrMore(Magpie.whitespace(Char.lineEndings)).join }
+
+  static comment {
+    return Magpie.sequence([
+      Ini.whitespace,
+      Magpie.char(";").discard,
+      Ini.whitespace,
+      // Read any ASCII character until an ASCII line ending
+      Magpie.zeroOrMore(Magpie.ascii(Char.asciiLineEndings)).join.tag("comment"),
+      Magpie.optional(Magpie.linefeed).discard
+    ]).map {|result| result.where {|token| token.tag == "comment" }.toList[0] }.map {|result|
+      return result.token.trim()
+    }
+  }
+
+  static sectionName {
+    var closingSquareBracket = "]".codePoints[0]
+    var chars = (0..Char.asciiMax).toList.where {|x| x != closingSquareBracket }
+    return Magpie.oneOrMore(Magpie.or(chars.map {|char| Magpie.char(char) }.toList)).join
+  }
+
+  static propertyName {
+    var exclusions = Char.asciiLineEndings
+    exclusions.addAll("=".codePoints)
+    return Magpie.oneOrMore(Magpie.ascii(exclusions)).join
+  }
+
+  static parser {
+    return Magpie.sequence([
+      Magpie.zeroOrMore(comment),
+      // Section
+      Magpie.sequence([
+        Magpie.char("["),
+        sectionName,
+        Magpie.char("]")
+      ]).rewrite {|results| Section.new(results[1].token)}.tag("section"),
+      Ini.whitespace.discard,
+      Magpie.optional(comment.discard),
+      Magpie.linefeed.discard,
+      Magpie.optional(comment.discard),
+      // Properties
+      Magpie.zeroOrMore(Magpie.sequence([
+        Ini.whitespace,
+        Ini.propertyName.tag("name"),
+        Ini.whitespace,
+        Magpie.char("="),
+        Ini.whitespace,
+        Magpie.oneOrMore(Magpie.ascii(Char.asciiLineEndings)).join.tag("value"),
+        Magpie.zeroOrMore(comment)
+      ])).rewrite {|results|
+        // FIXME: This only ever reads one property
+        results = results.where {|token| token.tag != null }.toList
+        return Property.new(results[0].lexeme, results[1].lexeme)
+      }
+    ]).rewrite {|results|
+      var sectionsAndProps = results.map {|result| result.token }.toList
+      var sections = []
+      for (it in sectionsAndProps) {
+        if (it is Section) sections.add(it)
+        if (it is Property) sections[-1].properties.add(it)
+      }
+      return sections
+    }
   }
 }
 
@@ -71,6 +103,11 @@ class Section {
 }
 
 class Property {
+  // Params:
+  // name: String
+  construct new(name) {
+    _name = name
+  }
   // Params:
   // name: String
   // value: String

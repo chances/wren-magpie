@@ -382,6 +382,14 @@ class ParserFn {
     }
   }
 
+  rewrite(fn) {
+    return ParserFn.new { |input|
+      var result = this.call(input)
+      result = Result.new(fn.call(result), Result.lexemes(result))
+      return result
+    }
+  }
+
   // Map the results of this parser to the result given by `fn`.
   // Params:
   // fn: Fn(result)
@@ -405,8 +413,8 @@ class Result {
   }
   construct new(token, lexeme) {
     if (token is Result) Fiber.abort("Tokens should not be Result values.")
-    _lexeme = token
     _token = token
+    _lexeme = lexeme
   }
 
   // Params: results: Result|List<Result>
