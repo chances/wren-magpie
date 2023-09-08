@@ -220,7 +220,11 @@ class Magpie {
   }
 
   // Section: Combinators
+  // Params: parser: ParserFn|Fn
+  // Throws: When `parser`'s arity is not one.
   static one(parser) {
+    if (parser.arity != 1) Fiber.abort("Expected a Fn with one parameter.")
+    if (parser is ParserFn) return parser
     return ParserFn.new { |input|
       return parser.call(input)
     }
@@ -310,6 +314,8 @@ class ParserFn {
   construct new(fn) {
     _fn = fn
   }
+
+  arity { _fn.arity }
 
   // Params:
   // input: String
