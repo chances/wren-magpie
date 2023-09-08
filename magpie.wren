@@ -69,6 +69,17 @@ class Magpie {
     return result
   }
 
+  // Debug the current input state.
+  static debug { Magpie.debug() }
+  // ditto
+  static debug() {
+    // FIXME: This halts the whole parsing process
+    return ParserFn.new {|input|
+      var line = input.split("\n")[0]
+      System.print("Current line: %(line)")
+    }
+  }
+
   // Section: Primitive Helpers
   static charRangeFrom(string) {
     if (string == null || string.count == 0) Fiber.abort("Expected a non-null and non-empty string.")
@@ -341,6 +352,25 @@ class ParserFn {
   // input: String
   call(input) {
     return _fn.call(input)
+  }
+
+  // Debug the result of this parser.
+  debug {
+    return this.map {|result|
+      if (!(result is List || result is Result)) Fiber.abort("Unexpected parser result: %(result)")
+      if (result is Result) System.print(result.tag ? "%(result.tag): %(result.token)" : "%(result.token)")
+      return result
+    }
+  }
+
+  // Invoke the given function for each of this parser's results.
+  // Params:
+  // fn: Fn(result)
+  each(fn) {
+    return this.map {|result|
+      result is List ? result.each { fn.call(result) } : fn.call(result)
+      return result
+    }
   }
 
   // Section: Result Modifiers
