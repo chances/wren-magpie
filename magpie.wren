@@ -137,7 +137,7 @@ class Magpie {
 
     var chars = Char.whitespace.where {|x| !range.contains(x) }.toList
     return ParserFn.new {|input|
-      if (input is null || input.count == 0) Fiber.abort("Expected a whitespace char, but saw EOF.")
+      if (input == null || input.count == 0) Fiber.abort("Expected a whitespace char, but saw EOF.")
       for (char in chars) for (codePoint in input[0].codePoints) {
         if (codePoint == char) return Result.new(String.fromCodePoint(char))
       }

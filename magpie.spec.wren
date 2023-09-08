@@ -222,6 +222,11 @@ Assert.doesNotAbort(Fn.new {
   Magpie.zeroOrMore(Magpie.whitespace(Char.lineEndings)).join.call("")
 })
 
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.zeroOrMore(Magpie.whitespace(Char.lineEndings)).join.call("  ")
+  Assert.equal(result.token, "  ")
+})
+
 Assert.aborts(Fn.new {
   Magpie.parse(Magpie.whitespace, "foo")
 })
