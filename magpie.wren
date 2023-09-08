@@ -4,7 +4,7 @@ class Char {
   static asciiMin { 0 }
   static asciiMax { 0x7F }
   static space { 0x20 }
-  static asciiLineEndings { Char.lineEndings.where {|x| x <= Char.asciiMax } }
+  static asciiLineEndings { Char.lineEndings.where {|x| x <= Char.asciiMax }.toList }
 
   // Section: Line Endings
   // See: https://en.wikipedia.org/wiki/Newline#Unicode
@@ -165,8 +165,10 @@ class Magpie {
   // Throws: When the given `range` is a `List` and any of its items are not in the set of ASCII code points.
   // Throws: When the given `range` exceeds the set of ASCII code points.
   static ascii(range) {
+    if (range is String || range is List && range.any {|x| !(x is Num) }) {
+      Fiber.abort("Expected a list of unicode code points for ASCII exclusions.")
+    }
     if (range is Num) range = [range..range]
-    if (range is List && range.any {|x| !(x is Num) }) Fiber.abort("Expected a list of Num.")
     if (range is List && range.any {|x| x < 0 || x > Char.asciiMax }) {
       Fiber.abort("Expected only Num elements in the range of `0` to `%(Char.asciiMax)`, inclusive.")
     }
