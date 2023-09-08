@@ -1,4 +1,4 @@
-import "./vendor/assert/Assert" for Assert
+import "wren-assert/assert" for Assert
 import "./magpie" for Magpie, Result
 
 Assert.exists(Magpie)
