@@ -119,6 +119,17 @@ class Magpie {
       ).call(input)
     }
   }
+  // ditto
+  // Exclude the given `range` of code points.
+  // Params: range: Num|List<Num>|Range
+  // Throws: When the given `range` exceeds the set of ASCII code points.
+  static whitespace(range) {
+    if (range is Num) range = [range..range]
+    if (range is List && range.any {|x| !(x is Num) }) Fiber.abort("Expected a list of Num.")
+
+    var chars = Char.whitespace.where {|x| x < range.min && x > range.max }
+    return Magpie.zeroOrMore(Magpie.or(chars.map {|char| Magpie.char(char) }))
+  }
 
   static alphaLower { Magpie.alphaLower() }
   static alphaLower() {
@@ -136,18 +147,22 @@ class Magpie {
   static ascii() { Magpie.charFrom(0..Char.asciiMax) }
   // ditto
   // Exclude the given `range` of code points.
-  // Params: range: Num|String|List<Num>|Range Code points to exclude.
-  // Throws: When the given `range` is a `String` and is more than one code point.
+  // Params: range: Num|List<Num>|Range Code points to exclude.
+  // Throws: When the given `range` is a `List` and any of its items are not in the set of ASCII code points.
   // Throws: When the given `range` exceeds the set of ASCII code points.
   static ascii(range) {
     if (range is Num) range = [range..range]
-    // TODO: Figure out range of a list of code points
-    if (range is List) Fiber.abort("Unimplemented for List!")
-    if (range is String && range.codePoints.count == 1) Fiber.abort("Expected a single code point.")
-    if (range is String) range = [range.codePoints[0]..range.codePoints[0]]
-    if (range.min < 0 || range.max > 0x7F) Fiber.abort("Expected a range between `0` and `%(0x7F)`, inclusive.")
-    // TODO: ASCII with exclusions gymnastics
-    return Magpie.fail("Unimplemented!")
+    if (range is List && range.any {|x| !(x is Num) }) Fiber.abort("Expected a list of Num.")
+    if (range is List && range.any {|x| x < 0 || x > Char.asciiMax }) {
+      Fiber.abort("Expected only Num elements in the range of `0` to `%(Char.asciiMax)`, inclusive.")
+    }
+    if (range is Range && (range.min < 0 || range.max > Char.asciiMax)) {
+      Fiber.abort("Expected a range between `0` and `%(Char.asciiMax)`, inclusive.")
+    }
+    if (range is Range) range = range.toList
+
+    var chars = (0..Char.asciiMax).toList.where {|x| !range.contains(x) }
+    return Magpie.zeroOrMore(Magpie.or(chars.map {|char| Magpie.char(char) }))
   }
 
   // Parse an Arabic numeral digit, i.e. any number between zero and nine.
