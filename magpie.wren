@@ -394,12 +394,15 @@ class Result {
     return results.map {|token| token.tag }.toList
   }
 
+  // Params: list: List
+  // Returns: List<Result>
   static flatMap(list) {
+    if (list is List == false) Fiber.abort("Expected a List of `Result`s.")
     var results = []
-    for (r in list) {
-      if (r is EmptyResult) continue
-      if (r is Result) results.add(r)
-      if (r is List) results.addAll(Result.flatMap(r))
+    for (result in list) {
+      if (result is EmptyResult) continue
+      if (result is Result) results.add(result)
+      if (result is List) results.addAll(Result.flatMap(result))
     }
     return results
   }
