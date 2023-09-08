@@ -1,6 +1,7 @@
 import "wren-assert/assert" for Assert
-import "./magpie" for Magpie, Result
+import "./magpie" for Char, Magpie, Result
 
+Assert.exists(Char)
 Assert.exists(Magpie)
 Assert.exists(Result)
 
@@ -213,6 +214,10 @@ Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.oneOrMore(Magpie.whitespace).join, "\t\r\n")
   Assert.deepEqual(result.token, "\t\r\n")
   Assert.deepEqual(result.lexeme, "\t\r\n")
+})
+
+Assert.doesNotAbort(Fn.new {
+  Magpie.zeroOrMore(Magpie.whitespace(Char.lineEndings)).join.call("")
 })
 
 Assert.aborts(Fn.new {

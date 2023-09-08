@@ -354,10 +354,11 @@ class ParserFn {
   // ditto
   join() {
     return this.map {|result|
-      if (result is List) return result[0].rewrite(
+      if (result is List && result.count > 0) return result[0].rewrite(
         result.map {|r| r.token }.join(),
         result.map {|r| r.lexeme }.join()
       )
+      if (result is List && result.count == 0) return EmptyResult.new()
       return result.rewrite(result.token)
     }
   }
