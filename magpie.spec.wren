@@ -1,8 +1,10 @@
 import "wren-assert/assert" for Assert
-import "./magpie" for Char, Magpie, Result
+import "./magpie" for Char, EmptyResult, Magpie, ParserFn, Result
 
 Assert.exists(Char)
+Assert.exists(EmptyResult)
 Assert.exists(Magpie)
+Assert.exists(ParserFn)
 Assert.exists(Result)
 
 // Results
@@ -222,6 +224,22 @@ Assert.doesNotAbort(Fn.new {
 
 Assert.aborts(Fn.new {
   Magpie.parse(Magpie.whitespace, "foo")
+})
+
+// Result Modifiers
+
+Assert.doesNotAbort(Fn.new {
+  Assert.ok(Magpie.whitespace.discard.call(" ") is EmptyResult)
+})
+
+Assert.doesNotAbort(Fn.new {
+  Assert.countOf(Magpie.oneOrMore(Magpie.whitespace.discard).call("\t "), 0)
+})
+
+Assert.doesNotAbort(Fn.new {
+  var result = Magpie.sequence(Magpie.whitespace, Magpie.whitespace.discard).call("\t ")
+  Assert.countOf(result, 1)
+  Assert.typeOf(result[0], Result)
 })
 
 Assert.doesNotAbort(Fn.new {

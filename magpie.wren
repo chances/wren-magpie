@@ -85,6 +85,7 @@ class Magpie {
   }
   static advanceInput(input, result) {
     if (result is List) return input[Result.lexemes(result).count..-1]
+    if (result is Result && result.lexeme == null) return input
     return input[result.lexeme.count..-1]
   }
 
@@ -136,10 +137,9 @@ class Magpie {
 
     var chars = Char.whitespace.where {|x| !range.contains(x) }.toList
     return ParserFn.new {|input|
+      if (input is null || input.count == 0) Fiber.abort("Expected a whitespace char, but saw EOF.")
       for (char in chars) for (codePoint in input[0].codePoints) {
-        if (codePoint == char) {
-          return Result.new(String.fromCodePoint(char))
-        }
+        if (codePoint == char) return Result.new(String.fromCodePoint(char))
       }
       Fiber.abort("Expected a whitespace char, but saw %(input[0]).")
     }
@@ -281,9 +281,8 @@ class Magpie {
       var results = []
       for (parser in parsers) {
         var result = parser.call(input)
-        if (result is EmptyResult) continue
-        results.add(result)
         input = Magpie.advanceInput(input, result)
+        results.add(result)
       }
       return Result.flatMap(results)
     }
@@ -292,7 +291,7 @@ class Magpie {
     return ParserFn.new { |input|
       var results = []
       var error = null
-      while (error == null && input.count > 0) {
+      while (error == null && input != null && input.count > 0) {
         error = (Fiber.new {
           var result = parser.call(input)
           results.add(result)
@@ -340,6 +339,19 @@ class ParserFn {
   }
 
   // Section: Result Modifiers
+
+  // Discard the result.
+  discard { discard() }
+  // ditto
+  discard() {
+    return this.map {|result|
+      if (result is List) return Result.flatMap(
+        result.map {|result| EmptyResult.new(result)}.toList
+      )
+      result = EmptyResult.new(result)
+      return result
+    }
+  }
 
   // Tag the result of this parser with the given `value`.
   // Params:
@@ -458,7 +470,12 @@ class Result {
 // See: `Magpie.optional`
 class EmptyResult is Result {
   construct new() {
-    _token = null
-    _lexeme = ""
+    super(null, "")
+  }
+
+  // Params: result: Result
+  construct new(result) {
+    if (result is Result == false) Fiber.abort("Expected a Result.")
+    super(result.token, result.lexeme)
   }
 }
