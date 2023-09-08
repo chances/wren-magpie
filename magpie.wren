@@ -1,3 +1,58 @@
+// Unicode constants.
+class Char {
+  // Section: ASCII
+  static asciiMin { 0 }
+  static asciiMax { 0x7F }
+  static space { 0x20 }
+  static asciiLineEndings { Char.lineEndings.where {|x| x <= Char.asciiMax } }
+
+  // Section: Line Endings
+  // See: https://en.wikipedia.org/wiki/Newline#Unicode
+
+  // Carriage Return
+  static carriageReturn { "\r".codePoints[0] }
+  // Line Feed
+  static lineFeed { "\n".codePoints[0] }
+  // Vertical tab
+  static verticalTab { 0xB }
+  // Form feed
+  static formFeed { 0xC }
+  // Next Line
+  static nextLine { 0x0085 }
+  // Line Separator
+  static lineSeparator { 0x2028 }
+  // Paragraph Separator
+  static paragraphSeparator { 0x2029 }
+  static lineEndings {
+    return [
+      Char.carriageReturn,
+      Char.lineFeed,
+      Char.verticalTab,
+      Char.formFeed,
+      Char.nextLine,
+      Char.lineSeparator,
+      Char.paragraphSeparator
+    ]
+  }
+
+  // Section: Whitespace
+  static nonBreakingSpace { 160 }
+  // Note: Ideographic Space (`0x3000`) is purposefully excluded.
+  // See: https://en.wikipedia.org/wiki/Whitespace_character#Unicode
+  static whitespace {
+    var chars = [
+      9,
+      Char.space,
+      Char.nonBreakingSpace,
+      0x1680,
+    ]
+    chars.addAll([0x2000..0x200A].toList)
+    chars.addAll([0x202F, 0x205F])
+    chars.addAll(Char.lineEndings)
+    return chars
+  }
+}
+
 class Magpie {
   // Entry point for a parser
   static parse(parser, input) {
@@ -42,31 +97,19 @@ class Magpie {
   }
 
   // Parse a line ending.
-  // See https://en.wikipedia.org/wiki/Newline#Unicode
+  // See: https://en.wikipedia.org/wiki/Newline#Unicode
   static linefeed { Magpie.linefeed() }
   // ditto
   static linefeed() {
-    return Magpie.or([
+    return Magpie.or(
       // CR + LF
       Magpie.str("\r\n"),
-      //  Carriage Return
-      Magpie.char("\r"),
-      // Line Feed
-      Magpie.char("\n"),
-      // Vertical tab
-      Magpie.char(0xB),
-      // Form feed
-      Magpie.char(0xC),
-      // Next Line
-      Magpie.char(0x0085),
-      // Line Separator
-      Magpie.char(0x2028),
-      // Paragraph Separator
-      Magpie.char(0x2029)
-    ])
+      Magpie.or(Char.lineEndings.map {|char| Magpie.char(char) })
+    )
   }
 
-  // See https://en.wikipedia.org/wiki/Whitespace_character#Unicode
+  // Parse Unicode whitespace.
+  // See: https://en.wikipedia.org/wiki/Whitespace_character#Unicode
   static whitespace { Magpie.whitespace() }
   // ditto
   static whitespace() {
@@ -90,7 +133,7 @@ class Magpie {
   // See: https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)
   static ascii { Magpie.ascii() }
   // ditto
-  static ascii() { Magpie.charFrom(0..0x7F) }
+  static ascii() { Magpie.charFrom(0..Char.asciiMax) }
   // ditto
   // Exclude the given `range` of code points.
   // Params: range: Num|String|List<Num>|Range Code points to exclude.
