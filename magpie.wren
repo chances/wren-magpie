@@ -23,6 +23,10 @@ class Char {
   static lineSeparator { 0x2028 }
   // Paragraph Separator
   static paragraphSeparator { 0x2029 }
+  // Unicode line endings.
+  // See:
+  // - https://en.wikipedia.org/wiki/Newline#Unicode
+  // - https://en.wikipedia.org/wiki/Whitespace_character
   static lineEndings {
     return [
       Char.carriageReturn,
@@ -37,7 +41,9 @@ class Char {
 
   // Section: Whitespace
   static nonBreakingSpace { 160 }
+  // Unicode whitespace characters.
   // Note: Ideographic Space (`0x3000`) is purposefully excluded.
+  // See: `Char.lineEndings`
   // See: https://en.wikipedia.org/wiki/Whitespace_character#Unicode
   static whitespace {
     var chars = [
@@ -46,7 +52,7 @@ class Char {
       Char.nonBreakingSpace,
       0x1680,
     ]
-    chars.addAll([0x2000..0x200A].toList)
+    chars.addAll((0x2000..0x200A).toList)
     chars.addAll([0x202F, 0x205F])
     chars.addAll(Char.lineEndings)
     return chars
@@ -125,10 +131,18 @@ class Magpie {
   // Throws: When the given `range` exceeds the set of ASCII code points.
   static whitespace(range) {
     if (range is Num) range = [range..range]
-    if (range is List && range.any {|x| !(x is Num) }) Fiber.abort("Expected a list of Num.")
+    if (range is Range) range = range.toList
+    if (range.any {|x| x is Num == false }) Fiber.abort("Expected a list of Num.")
 
-    var chars = Char.whitespace.where {|x| x < range.min && x > range.max }
-    return Magpie.or(chars.map {|char| Magpie.char(char) })
+    var chars = Char.whitespace.where {|x| !range.contains(x) }.toList
+    return ParserFn.new {|input|
+      for (char in chars) for (codePoint in input[0].codePoints) {
+        if (codePoint == char) {
+          return Result.new(String.fromCodePoint(char))
+        }
+      }
+      Fiber.abort("Expected a whitespace char, but saw %(input[0]).")
+    }
   }
 
   static alphaLower { Magpie.alphaLower() }

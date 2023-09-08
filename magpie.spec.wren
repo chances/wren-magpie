@@ -153,31 +153,27 @@ Assert.doesNotAbort(Fn.new {
 })
 
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "aB")
-  Assert.equal(result.count, 2)
-  Assert.equal(Result.lexemes(result), "aB")
-  Assert.deepEqual(Result.tokens(result), "aB".toList)
+  var result = Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper).join, "aB")
+  Assert.equal(result.lexeme, "aB")
+  Assert.equal(result.token, "aB")
 })
 
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper), "qT")
-  Assert.equal(result.count, 2)
-  Assert.equal(Result.lexemes(result), "qT")
-  Assert.deepEqual(Result.tokens(result), "qT".toList)
+  var result = Magpie.parse(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper).join, "qT")
+  Assert.equal(result.lexeme, "qT")
+  Assert.equal(result.token, "qT")
 })
 
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.zeroOrMore(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper)), "aBaB")
-  Assert.equal(result.count, 4)
-  Assert.equal(Result.lexemes(result), "aBaB")
-  Assert.deepEqual(Result.tokens(result), "aBaB".toList)
+  var result = Magpie.parse(Magpie.zeroOrMore(Magpie.sequence(Magpie.alphaLower, Magpie.alphaUpper)).join, "aBaB")
+  Assert.equal(result.lexeme, "aBaB")
+  Assert.equal(result.token, "aBaB")
 })
 
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.oneOrMore(Magpie.alphaLower), "aaaB")
-  Assert.equal(result.count, 3)
-  Assert.equal(Result.lexemes(result), "aaa")
-  Assert.deepEqual(Result.tokens(result), "aaa".toList)
+  var result = Magpie.parse(Magpie.oneOrMore(Magpie.alphaLower).join, "aaaB")
+  Assert.equal(result.lexeme, "aaa")
+  Assert.equal(result.token, "aaa")
 })
 
 Assert.aborts(Fn.new {
@@ -190,34 +186,37 @@ Assert.aborts(Fn.new {
 
 // Tab Character
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.whitespace, "\t")
-  Assert.equal(Result.lexemes(result), "\t")
+  var result = Magpie.parse(Magpie.whitespace.join, "\t")
+  Assert.equal(result.lexeme, "\t")
 })
 
 // Tab Character (32)
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.whitespace, "  ")
-  Assert.equal(Result.lexemes(result)[0].codePoints[0], 32)
+  var result = Magpie.parse(Magpie.whitespace.join, "  ")
+  Assert.equal(result.lexeme[0].codePoints[0], 32)
 })
 
 // Spaces
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.whitespace, " ")
-  Assert.equal(Result.lexemes(result), " ")
+  var result = Magpie.parse(Magpie.whitespace.join, " ")
+  Assert.equal(result.lexeme, " ")
 })
 
 Assert.doesNotAbort(Fn.new {
   var result = Magpie.parse(Magpie.oneOrMore(Magpie.whitespace).join.tag("linefeed"), "\r\n")
   Assert.equal(result.tag, "linefeed")
   Assert.deepEqual(result.token, "\r\n")
-  // FIXME: Assert.deepEqual(result.lexeme, "\r\n")
+  Assert.equal(result.lexeme, "\r\n")
 })
 
 Assert.doesNotAbort(Fn.new {
-  var result = Magpie.parse(Magpie.oneOrMore(Magpie.whitespace), "\t\r\n")
-  Assert.equal(result.count, 3)
-  Assert.deepEqual(Result.tokens(result), "\t\r\n")
-  Assert.deepEqual(Result.lexemes(result), "\t\r\n")
+  var result = Magpie.parse(Magpie.oneOrMore(Magpie.whitespace).join, "\t\r\n")
+  Assert.deepEqual(result.token, "\t\r\n")
+  Assert.deepEqual(result.lexeme, "\t\r\n")
+})
+
+Assert.aborts(Fn.new {
+  Magpie.parse(Magpie.whitespace, "foo")
 })
 
 Assert.doesNotAbort(Fn.new {
