@@ -56,7 +56,11 @@ class Char {
 class Magpie {
   // Entry point for a parser
   static parse(parser, input) {
-    return parser.call(input)
+    var result = parser.call(input)
+    if (result is ParserFn) {
+      Fiber.abort("Unexpected `ParserFn` result. Did you forget to use `.call(input)` in your custom `ParserFn`?")
+    }
+    return result
   }
 
   // Section: Primitive Helpers
