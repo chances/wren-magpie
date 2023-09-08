@@ -1,50 +1,3 @@
-class ParserFn {
-  // Params:
-  // fn: Fn
-  construct new(fn) {
-    _fn = fn
-  }
-
-  // Params:
-  // input: String
-  call(input) {
-    return _fn.call(input)
-  }
-
-  // Tag the result of this parser with the given `value`.
-  // Params:
-  // value: String
-  tag(value) {
-    return this.map {|result|
-      if (result is List) return result.map {|r| r.tag(value)}.toList
-      return result.tag(value)
-    }
-  }
-
-  // Join all of the tokens that result from this parser together.
-  join { join() }
-  // ditto
-  join() {
-    return this.map {|result|
-      if (result is List) return result[0].rewrite(result.map {|r| r.token }.join())
-      return result.rewrite(result.token)
-    }
-  }
-
-  // Map the results of this parser to the result given by `fn`.
-  // Params:
-  // fn: Fn
-  map(fn) {
-    return ParserFn.new { |input|
-      var result = this.call(input)
-      var token = fn.call(result)
-      if (token is Result) return token
-      if (result is List) return result.map {|r| r.rewrite(token) }.toList
-      return result.rewrite(token)
-    }
-  }
-}
-
 class Magpie {
   // Entry point for a parser
   static parse(parser, input) {
@@ -292,6 +245,55 @@ class Magpie {
   }
 }
 
+// A parser `Fn`.
+class ParserFn {
+  // Params:
+  // fn: Fn
+  construct new(fn) {
+    _fn = fn
+  }
+
+  // Params:
+  // input: String
+  call(input) {
+    return _fn.call(input)
+  }
+
+  // Tag the result of this parser with the given `value`.
+  // Params:
+  // value: String
+  tag(value) {
+    return this.map {|result|
+      if (result is List) return result.map {|r| r.tag(value)}.toList
+      return result.tag(value)
+    }
+  }
+
+  // Join all of the tokens that result from this parser together.
+  join { join() }
+  // ditto
+  join() {
+    return this.map {|result|
+      if (result is List) return result[0].rewrite(result.map {|r| r.token }.join())
+      return result.rewrite(result.token)
+    }
+  }
+
+  // Map the results of this parser to the result given by `fn`.
+  // Params:
+  // fn: Fn
+  map(fn) {
+    return ParserFn.new { |input|
+      var result = this.call(input)
+      var token = fn.call(result)
+      if (token is Result) return token
+      if (result is List) return result.map {|r| r.rewrite(token) }.toList
+      return result.rewrite(token)
+    }
+  }
+}
+
+// Section: Parser Results
 // A parse result token and its source lexeme.
 class Result {
   construct new(token) {
@@ -354,7 +356,7 @@ class Result {
   }
 }
 
-// See `Magpie.optional`
+// See: `Magpie.optional`
 class EmptyResult is Result {
   construct new() {
     _token = null
