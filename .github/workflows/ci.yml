@@ -17,6 +17,8 @@ jobs:
         tar xf /tmp/wren-console.tar.gz --directory=/tmp/wren-console
         echo "/tmp/wren-console/bin" >> $GITHUB_PATH
         echo "Installed Wren console to system path"
+    - name: Install Dependencies
+      run: wrenc package.wren install
     - name: Test
       id: tests
       if: always() # Run tests even if lint step fails
