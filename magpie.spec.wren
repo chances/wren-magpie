@@ -1,4 +1,4 @@
-import "wren-assert/assert" for Assert
+import "wren-assert/Assert" for Assert
 import "./magpie" for Char, EmptyResult, Magpie, ParserFn, Result
 
 Assert.exists(Char)
